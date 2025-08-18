@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Database files  
+*.db
+meal_planner.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build directories
+/client/build
+/client/dist
+
+# Environment variables
+.env
+.env.test
+
+# OS files
+.DS_Store
+Thumbs.db
+nul
