@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { themealdbApi } from '../utils/themealdbApi';
+import { edamamApi } from '../utils/edamamApi';
 
 const TheMealDBBrowser = ({ onAddRecipe }) => {
   const [recipes, setRecipes] = useState([]);
@@ -8,10 +9,17 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [activeSource, setActiveSource] = useState('themealdb');
+  const [edamamOptions, setEdamamOptions] = useState({
+    diet: '',
+    cuisine: '',
+    health: ''
+  });
 
   useEffect(() => {
     loadCategories();
     loadRandomRecipes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCategories = async () => {
@@ -21,7 +29,22 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
 
   const loadRandomRecipes = async () => {
     setLoading(true);
-    const randomRecipes = await themealdbApi.getRandomRecipes(12);
+    let randomRecipes = [];
+    
+    if (activeSource === 'themealdb') {
+      randomRecipes = await themealdbApi.getRandomRecipes(12);
+    } else if (activeSource === 'edamam' && edamamApi.isConfigured()) {
+      randomRecipes = await edamamApi.getRandomRecipes(12);
+    } else if (activeSource === 'both') {
+      const [themealdbRecipes, edamamRecipes] = await Promise.all([
+        themealdbApi.getRandomRecipes(6),
+        edamamApi.isConfigured() ? edamamApi.getRandomRecipes(6) : Promise.resolve([])
+      ]);
+      randomRecipes = [...themealdbRecipes, ...edamamRecipes];
+      // Shuffle the combined results
+      randomRecipes = randomRecipes.sort(() => 0.5 - Math.random());
+    }
+    
     setRecipes(randomRecipes);
     setLoading(false);
   };
@@ -47,7 +70,20 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
     }
     
     setLoading(true);
-    const searchResults = await themealdbApi.searchByName(searchTerm);
+    let searchResults = [];
+    
+    if (activeSource === 'themealdb') {
+      searchResults = await themealdbApi.searchByName(searchTerm);
+    } else if (activeSource === 'edamam' && edamamApi.isConfigured()) {
+      searchResults = await edamamApi.searchRecipes(searchTerm, edamamOptions);
+    } else if (activeSource === 'both') {
+      const [themealdbResults, edamamResults] = await Promise.all([
+        themealdbApi.searchByName(searchTerm),
+        edamamApi.isConfigured() ? edamamApi.searchRecipes(searchTerm, edamamOptions) : Promise.resolve([])
+      ]);
+      searchResults = [...themealdbResults, ...edamamResults];
+    }
+    
     setRecipes(searchResults);
     setLoading(false);
   };
@@ -89,9 +125,15 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
                 <img src={recipe.image} alt={recipe.name} className="recipe-image" />
               )}
               <div className="recipe-meta-badges">
-                <span className="badge category-badge">{recipe.category}</span>
-                <span className="badge area-badge">{recipe.area}</span>
+                <span className={`badge source-badge ${recipe.source.toLowerCase()}`}>
+                  {recipe.source}
+                </span>
+                {recipe.category && <span className="badge category-badge">{recipe.category}</span>}
+                {recipe.area && <span className="badge area-badge">{recipe.area}</span>}
+                {recipe.cuisine && <span className="badge cuisine-badge">{recipe.cuisine}</span>}
                 <span className="badge protein-badge">{recipe.protein_type}</span>
+                {recipe.calories && <span className="badge calories-badge">{recipe.calories} cal</span>}
+                {recipe.cook_time_total && <span className="badge time-badge">{recipe.cook_time_total} min</span>}
               </div>
             </div>
             
@@ -144,8 +186,52 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
   return (
     <div className="themealdb-browser">
       <div className="browser-header">
-        <h2>Discover Recipes from TheMealDB</h2>
-        <p>Browse thousands of recipes from around the world</p>
+        <h2>Discover Recipes from Multiple Sources</h2>
+        <p>Browse thousands of recipes from TheMealDB{edamamApi.isConfigured() ? ' and Edamam' : ''}</p>
+      </div>
+
+      <div className="source-selector">
+        <div className="source-tabs">
+          <button
+            className={`source-tab ${activeSource === 'themealdb' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveSource('themealdb');
+              setSelectedCategory('');
+              loadRandomRecipes();
+            }}
+          >
+            TheMealDB
+          </button>
+          {edamamApi.isConfigured() && (
+            <>
+              <button
+                className={`source-tab ${activeSource === 'edamam' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveSource('edamam');
+                  setSelectedCategory('');
+                  loadRandomRecipes();
+                }}
+              >
+                Edamam
+              </button>
+              <button
+                className={`source-tab ${activeSource === 'both' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveSource('both');
+                  setSelectedCategory('');
+                  loadRandomRecipes();
+                }}
+              >
+                Both Sources
+              </button>
+            </>
+          )}
+          {!edamamApi.isConfigured() && (
+            <div className="api-config-notice">
+              <small>💡 Add Edamam API credentials to access millions more recipes</small>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="browser-controls">
@@ -160,20 +246,65 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
           <button type="submit" className="search-btn">Search</button>
         </form>
 
-        <div className="category-filter">
-          <select
-            value={selectedCategory}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="category-select"
-          >
-            <option value="">All Categories</option>
-            {categories.map(category => (
-              <option key={category.idCategory} value={category.strCategory}>
-                {category.strCategory}
-              </option>
-            ))}
-          </select>
-        </div>
+        {activeSource === 'themealdb' && (
+          <div className="category-filter">
+            <select
+              value={selectedCategory}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className="category-select"
+            >
+              <option value="">All Categories</option>
+              {categories.map(category => (
+                <option key={category.idCategory} value={category.strCategory}>
+                  {category.strCategory}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {(activeSource === 'edamam' || activeSource === 'both') && edamamApi.isConfigured() && (
+          <div className="edamam-filters">
+            <select
+              value={edamamOptions.diet}
+              onChange={(e) => setEdamamOptions(prev => ({ ...prev, diet: e.target.value }))}
+              className="edamam-select"
+            >
+              <option value="">Any Diet</option>
+              {edamamApi.getDietOptions().map(diet => (
+                <option key={diet} value={diet}>
+                  {diet.charAt(0).toUpperCase() + diet.slice(1).replace('-', ' ')}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={edamamOptions.cuisine}
+              onChange={(e) => setEdamamOptions(prev => ({ ...prev, cuisine: e.target.value }))}
+              className="edamam-select"
+            >
+              <option value="">Any Cuisine</option>
+              {edamamApi.getCuisineOptions().map(cuisine => (
+                <option key={cuisine} value={cuisine}>
+                  {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={edamamOptions.health}
+              onChange={(e) => setEdamamOptions(prev => ({ ...prev, health: e.target.value }))}
+              className="edamam-select"
+            >
+              <option value="">Any Health</option>
+              {edamamApi.getHealthOptions().map(health => (
+                <option key={health} value={health}>
+                  {health.charAt(0).toUpperCase() + health.slice(1).replace('-', ' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button onClick={loadRandomRecipes} className="random-btn">
           🎲 Random Recipes
@@ -205,8 +336,13 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
               <div className="recipe-card-content">
                 <h3>{recipe.name}</h3>
                 <div className="recipe-card-meta">
-                  <span className="category">{recipe.category}</span>
-                  <span className="area">{recipe.area}</span>
+                  <span className={`source-badge ${recipe.source.toLowerCase()}`}>
+                    {recipe.source}
+                  </span>
+                  {recipe.category && <span className="category">{recipe.category}</span>}
+                  {recipe.area && <span className="area">{recipe.area}</span>}
+                  {recipe.cuisine && <span className="cuisine">{recipe.cuisine}</span>}
+                  {recipe.calories && <span className="calories">{recipe.calories} cal</span>}
                 </div>
                 <div className="recipe-card-tags">
                   {recipe.dietary_tags.map((tag, index) => (

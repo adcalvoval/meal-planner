@@ -1099,6 +1099,140 @@ body {
   transform: translateY(-1px);
 }
 
+/* Source Selector Styles */
+.source-selector {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9ff;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.source-tabs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.source-tab {
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.source-tab:hover {
+  background: #e8eaff;
+  border-color: #667eea;
+}
+
+.source-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.api-config-notice {
+  padding: 0.5rem 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 20px;
+  margin-left: 1rem;
+}
+
+.api-config-notice small {
+  color: #856404;
+  font-size: 0.85rem;
+}
+
+/* Edamam Filter Styles */
+.edamam-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.edamam-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  min-width: 140px;
+}
+
+.edamam-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Source Badge Styles */
+.source-badge {
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.source-badge.themealdb {
+  background: #ff6b6b;
+  color: white;
+}
+
+.source-badge.edamam {
+  background: #4ecdc4;
+  color: white;
+}
+
+.cuisine-badge {
+  background: #ffeaa7;
+  color: #2d3436;
+}
+
+.calories-badge {
+  background: #fd79a8;
+  color: white;
+}
+
+.time-badge {
+  background: #6c5ce7;
+  color: white;
+}
+
+/* Recipe Card Meta Updates */
+.recipe-card-meta {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.recipe-card-meta .category,
+.recipe-card-meta .area,
+.recipe-card-meta .cuisine,
+.recipe-card-meta .calories {
+  background: #f0f0f0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.recipe-card-meta .source-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
 /* Clickable Recipe Cards */
 .clickable-recipe {
   cursor: pointer;
