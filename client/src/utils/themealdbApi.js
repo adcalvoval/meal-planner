@@ -1,3 +1,5 @@
+import { convertRecipeToMetric } from './metricConverter';
+
 const THEMEALDB_BASE_URL = 'https://www.themealdb.com/api/json/v1/1';
 
 // Transform TheMealDB recipe to our app's format
@@ -43,7 +45,7 @@ const transformMealDBRecipe = (mealDBRecipe) => {
   if (tags.includes('healthy')) dietary_tags.push('healthy');
   if (tags.includes('comfort')) dietary_tags.push('comfort');
   
-  return {
+  const recipe = {
     id: `themealdb-${mealDBRecipe.idMeal}`,
     name: mealDBRecipe.strMeal,
     ingredients: ingredients,
@@ -63,6 +65,9 @@ const transformMealDBRecipe = (mealDBRecipe) => {
     youtube: mealDBRecipe.strYoutube,
     source_url: mealDBRecipe.strSource
   };
+
+  // Convert imperial measurements to metric
+  return convertRecipeToMetric(recipe);
 };
 
 // API Functions

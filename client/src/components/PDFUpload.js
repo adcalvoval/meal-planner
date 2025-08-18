@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { convertRecipeToMetric } from '../utils/metricConverter';
 
 const PDFUpload = ({ onRecipeParsed, onCancel }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -31,7 +32,11 @@ const PDFUpload = ({ onRecipeParsed, onCancel }) => {
         throw new Error('Failed to parse PDF');
       }
 
-      const recipe = await response.json();
+      let recipe = await response.json();
+      
+      // Apply additional metric conversion on client side as backup
+      recipe = convertRecipeToMetric(recipe);
+      
       setParsedRecipe(recipe);
       setEditedRecipe({
         name: recipe.name || '',

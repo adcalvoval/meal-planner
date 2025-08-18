@@ -1,4 +1,4 @@
-// Utility functions to convert imperial measurements to metric
+// Client-side metric converter for external recipe sources
 
 const imperialToMetric = {
   // Volume conversions (to ml)
@@ -52,7 +52,6 @@ const imperialToMetric = {
 
 // Common ingredient-specific conversions (when no weight/volume specified)
 const ingredientDefaults = {
-  // These provide metric equivalents for common "1 large", "1 medium" type measurements
   'large egg': '60g',
   'medium egg': '50g', 
   'small egg': '40g',
@@ -78,7 +77,7 @@ const ingredientDefaults = {
   'clove of garlic': '3g'
 };
 
-function convertIngredientToMetric(ingredient) {
+export function convertIngredientToMetric(ingredient) {
   let convertedIngredient = ingredient.trim();
   
   // Handle special ingredient-specific conversions first
@@ -174,7 +173,7 @@ function convertIngredientToMetric(ingredient) {
   return convertedIngredient;
 }
 
-function convertRecipeToMetric(recipe) {
+export function convertRecipeToMetric(recipe) {
   if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
     recipe.ingredients = recipe.ingredients.map(ingredient => 
       convertIngredientToMetric(ingredient)
@@ -184,8 +183,10 @@ function convertRecipeToMetric(recipe) {
   return recipe;
 }
 
-module.exports = {
+const metricConverter = {
   convertIngredientToMetric,
   convertRecipeToMetric,
   imperialToMetric
 };
+
+export default metricConverter;

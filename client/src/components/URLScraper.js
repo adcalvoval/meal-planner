@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { convertRecipeToMetric } from '../utils/metricConverter';
 
 const URLScraper = ({ onAddRecipe }) => {
   const [url, setUrl] = useState('');
@@ -28,12 +29,15 @@ const URLScraper = ({ onAddRecipe }) => {
         throw new Error('Failed to scrape recipe');
       }
 
-      const recipe = await response.json();
+      let recipe = await response.json();
       
       if (!recipe.name) {
         setError('Could not extract recipe from this URL. Try a different recipe URL or add it manually.');
         return;
       }
+
+      // Apply additional metric conversion on client side as backup
+      recipe = convertRecipeToMetric(recipe);
 
       setScrapedRecipe({
         ...recipe,
