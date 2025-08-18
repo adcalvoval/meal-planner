@@ -1,7 +1,4 @@
 {
-  "version": 2,
-  "name": "family-meal-planner",
-  "buildCommand": "npm run vercel-build",
   "builds": [
     {
       "src": "server.js",
@@ -11,17 +8,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/server.js"
+      "dest": "server.js"
     }
-  ],
-  "functions": {
-    "server.js": {
-      "includeFiles": "client/build/**"
-    }
-  },
-  "installCommand": "npm install && npm run install-client"
+  ]
 }
