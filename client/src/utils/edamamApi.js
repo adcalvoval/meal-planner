@@ -150,7 +150,7 @@ export const edamamApi = {
 
       const response = await fetch(`${EDAMAM_BASE_URL}?${queryParams}`, {
         headers: {
-          'Accept-Encoding': 'gzip'
+          'Edamam-Account-User': 'demo-user'
         }
       });
 
