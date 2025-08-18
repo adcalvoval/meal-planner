@@ -15,7 +15,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
 
-const db = new sqlite3.Database('./meal_planner.db');
+// For Vercel deployment, use in-memory database or environment-specific path
+const dbPath = process.env.NODE_ENV === 'production' ? ':memory:' : './meal_planner.db';
+const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS recipes (
@@ -51,38 +53,47 @@ db.serialize(() => {
     preferences TEXT
   )`);
   
-  db.get("SELECT COUNT(*) as count FROM recipes", (err, row) => {
-    if (!err && row.count === 0) {
-      console.log('Adding sample recipes...');
-      addSampleRecipes(db);
-    } else if (!err) {
-      // Check if we need to update to metric
-      db.get("SELECT ingredients FROM recipes WHERE name = 'Scrambled Eggs with Toast'", (err, recipe) => {
-        if (!err && recipe) {
-          const ingredients = JSON.parse(recipe.ingredients);
-          // Check if this recipe still has imperial measurements
-          if (ingredients.some(ing => ing.includes('tbsp'))) {
-            console.log('Updating recipes to metric system...');
-            db.run("DELETE FROM recipes", (err) => {
-              if (!err) {
-                addSampleRecipes(db);
-              }
-            });
+  // Always add sample recipes in production (in-memory database)
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Production mode: Adding sample recipes...');
+    addSampleRecipes(db);
+  } else {
+    db.get("SELECT COUNT(*) as count FROM recipes", (err, row) => {
+      if (!err && row.count === 0) {
+        console.log('Adding sample recipes...');
+        addSampleRecipes(db);
+      } else if (!err) {
+        // Check if we need to update to metric
+        db.get("SELECT ingredients FROM recipes WHERE name = 'Scrambled Eggs with Toast'", (err, recipe) => {
+          if (!err && recipe) {
+            const ingredients = JSON.parse(recipe.ingredients);
+            // Check if this recipe still has imperial measurements
+            if (ingredients.some(ing => ing.includes('tbsp'))) {
+              console.log('Updating recipes to metric system...');
+              db.run("DELETE FROM recipes", (err) => {
+                if (!err) {
+                  addSampleRecipes(db);
+                }
+              });
+            }
           }
-        }
-      });
-    }
-  });
-});
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+        });
+      }
+    });
   }
 });
+
+// For Vercel deployment, use memory storage instead of disk storage
+const storage = process.env.NODE_ENV === 'production' 
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+      },
+      filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname);
+      }
+    });
 
 const upload = multer({ storage: storage });
 
