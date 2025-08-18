@@ -4,10 +4,12 @@ import MealPlanView from './components/MealPlanView';
 import RecipeUpload from './components/RecipeUpload';
 import RecipeList from './components/RecipeList';
 import URLScraper from './components/URLScraper';
+import RecipeEditForm from './components/RecipeEditForm';
 
 function App() {
   const [activeTab, setActiveTab] = useState('meal-plan');
   const [recipes, setRecipes] = useState([]);
+  const [editingRecipe, setEditingRecipe] = useState(null);
   const [mealPlanData, setMealPlanData] = useState({
     mealPlan: [],
     shoppingList: [],
@@ -64,6 +66,65 @@ function App() {
     }
   };
 
+  const updateRecipe = async (recipeId, updatedRecipe) => {
+    try {
+      const response = await fetch(`/api/recipes/${recipeId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedRecipe),
+      });
+      
+      if (response.ok) {
+        fetchRecipes();
+        setEditingRecipe(null);
+        return true;
+      } else {
+        console.error('Failed to update recipe');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating recipe:', error);
+      return false;
+    }
+  };
+
+  const deleteRecipe = async (recipeId) => {
+    if (!window.confirm('Are you sure you want to delete this recipe?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/recipes/${recipeId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        fetchRecipes();
+        return true;
+      } else {
+        console.error('Failed to delete recipe');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      return false;
+    }
+  };
+
+  const handleEditRecipe = (recipe) => {
+    setEditingRecipe(recipe);
+  };
+
+  const handleSaveEdit = async (updatedRecipe) => {
+    await updateRecipe(editingRecipe.id, updatedRecipe);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRecipe(null);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -104,8 +165,19 @@ function App() {
             loading={loading} 
           />
         )}
-        {activeTab === 'recipes' && (
-          <RecipeList recipes={recipes} />
+        {activeTab === 'recipes' && !editingRecipe && (
+          <RecipeList 
+            recipes={recipes} 
+            onEditRecipe={handleEditRecipe}
+            onDeleteRecipe={deleteRecipe}
+          />
+        )}
+        {activeTab === 'recipes' && editingRecipe && (
+          <RecipeEditForm
+            recipe={editingRecipe}
+            onSave={handleSaveEdit}
+            onCancel={handleCancelEdit}
+          />
         )}
         {activeTab === 'add-recipe' && (
           <RecipeUpload onAddRecipe={addRecipe} />

@@ -130,6 +130,48 @@ app.get('/api/recipes', (req, res) => {
   });
 });
 
+// Update recipe endpoint
+app.put('/api/recipes/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, ingredients, instructions, prep_time, cook_time, servings, meal_type, dietary_tags, weather_preference, protein_type } = req.body;
+  
+  db.run(
+    `UPDATE recipes SET 
+     name = ?, ingredients = ?, instructions = ?, prep_time = ?, cook_time = ?, 
+     servings = ?, meal_type = ?, dietary_tags = ?, weather_preference = ?, protein_type = ? 
+     WHERE id = ?`,
+    [name, JSON.stringify(ingredients), instructions, prep_time, cook_time, servings, meal_type, JSON.stringify(dietary_tags), weather_preference, protein_type, id],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      if (this.changes === 0) {
+        res.status(404).json({ error: 'Recipe not found' });
+        return;
+      }
+      res.json({ message: 'Recipe updated successfully', changes: this.changes });
+    }
+  );
+});
+
+// Delete recipe endpoint
+app.delete('/api/recipes/:id', (req, res) => {
+  const { id } = req.params;
+  
+  db.run("DELETE FROM recipes WHERE id = ?", [id], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (this.changes === 0) {
+      res.status(404).json({ error: 'Recipe not found' });
+      return;
+    }
+    res.json({ message: 'Recipe deleted successfully', changes: this.changes });
+  });
+});
+
 // PDF Upload endpoint for recipe extraction
 app.post('/api/upload-pdf-recipe', upload.single('pdf'), async (req, res) => {
   if (!req.file) {

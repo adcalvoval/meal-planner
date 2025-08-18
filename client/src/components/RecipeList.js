@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import RecipeModal from './RecipeModal';
 
-const RecipeList = ({ recipes }) => {
+const RecipeList = ({ recipes, onEditRecipe, onDeleteRecipe }) => {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   return (
     <div className="recipe-list">
@@ -83,7 +83,9 @@ const RecipeList = ({ recipes }) => {
       {selectedRecipe && (
         <RecipeModal 
           recipe={selectedRecipe} 
-          onClose={() => setSelectedRecipe(null)} 
+          onClose={() => setSelectedRecipe(null)}
+          onEdit={onEditRecipe}
+          onDelete={onDeleteRecipe}
         />
       )}
     </div>

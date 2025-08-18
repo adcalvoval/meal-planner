@@ -1,6 +1,6 @@
 import React from 'react';
 
-const RecipeModal = ({ recipe, onClose }) => {
+const RecipeModal = ({ recipe, onClose, onEdit, onDelete }) => {
   if (!recipe) return null;
 
   const handleBackdropClick = (e) => {
@@ -14,7 +14,23 @@ const RecipeModal = ({ recipe, onClose }) => {
       <div className="modal-content">
         <div className="modal-header">
           <h2>{recipe.name}</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <div className="modal-actions">
+            <button 
+              className="edit-btn" 
+              onClick={() => onEdit(recipe)}
+              title="Edit Recipe"
+            >
+              ✏️ Edit
+            </button>
+            <button 
+              className="delete-btn" 
+              onClick={() => onDelete(recipe.id)}
+              title="Delete Recipe"
+            >
+              🗑️ Delete
+            </button>
+            <button className="modal-close" onClick={onClose}>×</button>
+          </div>
         </div>
         
         <div className="modal-body">
