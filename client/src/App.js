@@ -5,6 +5,7 @@ import RecipeUpload from './components/RecipeUpload';
 import RecipeList from './components/RecipeList';
 import URLScraper from './components/URLScraper';
 import RecipeEditForm from './components/RecipeEditForm';
+import TheMealDBBrowser from './components/TheMealDBBrowser';
 
 function App() {
   const [activeTab, setActiveTab] = useState('meal-plan');
@@ -154,6 +155,12 @@ function App() {
           >
             Import from URL
           </button>
+          <button 
+            className={activeTab === 'discover' ? 'active' : ''} 
+            onClick={() => setActiveTab('discover')}
+          >
+            Discover Recipes
+          </button>
         </nav>
       </header>
 
@@ -184,6 +191,9 @@ function App() {
         )}
         {activeTab === 'scrape-url' && (
           <URLScraper onAddRecipe={addRecipe} />
+        )}
+        {activeTab === 'discover' && (
+          <TheMealDBBrowser onAddRecipe={addRecipe} />
         )}
       </main>
     </div>

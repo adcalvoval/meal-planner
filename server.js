@@ -566,6 +566,78 @@ app.get('/api/weather', async (req, res) => {
   }
 });
 
+// TheMealDB API functions
+async function fetchTheMealDBRecipes(count = 20) {
+  const recipes = [];
+  const promises = [];
+  
+  for (let i = 0; i < count; i++) {
+    promises.push(
+      fetch('https://www.themealdb.com/api/json/v1/1/random.php')
+        .then(response => response.json())
+        .then(data => data.meals ? transformMealDBRecipe(data.meals[0]) : null)
+        .catch(() => null)
+    );
+  }
+  
+  const results = await Promise.all(promises);
+  return results.filter(recipe => recipe !== null);
+}
+
+function transformMealDBRecipe(mealDBRecipe) {
+  const ingredients = [];
+  for (let i = 1; i <= 20; i++) {
+    const ingredient = mealDBRecipe[`strIngredient${i}`];
+    const measure = mealDBRecipe[`strMeasure${i}`];
+    if (ingredient && ingredient.trim()) {
+      ingredients.push(`${measure ? measure.trim() + ' ' : ''}${ingredient.trim()}`);
+    }
+  }
+
+  let meal_type = 'dinner';
+  const category = mealDBRecipe.strCategory?.toLowerCase() || '';
+  const tags = mealDBRecipe.strTags?.toLowerCase() || '';
+  
+  if (category.includes('breakfast') || tags.includes('breakfast')) {
+    meal_type = 'breakfast';
+  }
+
+  let protein_type = 'meat';
+  if (category.includes('vegetarian') || tags.includes('vegetarian')) {
+    protein_type = 'vegetarian';
+  } else if (category.includes('vegan') || tags.includes('vegan')) {
+    protein_type = 'vegan';
+  } else if (category.includes('seafood') || ingredients.some(ing => 
+    ing.toLowerCase().includes('fish') || 
+    ing.toLowerCase().includes('salmon') || 
+    ing.toLowerCase().includes('tuna') || 
+    ing.toLowerCase().includes('shrimp')
+  )) {
+    protein_type = 'fish';
+  }
+
+  const dietary_tags = [];
+  if (category.includes('vegetarian')) dietary_tags.push('vegetarian');
+  if (tags && (tags.includes('quick') || tags.includes('easy'))) dietary_tags.push('quick');
+  if (tags && tags.includes('healthy')) dietary_tags.push('healthy');
+  if (tags && tags.includes('comfort')) dietary_tags.push('comfort');
+  
+  return {
+    id: `themealdb-${mealDBRecipe.idMeal}`,
+    name: mealDBRecipe.strMeal,
+    ingredients: ingredients,
+    instructions: mealDBRecipe.strInstructions,
+    prep_time: 15,
+    cook_time: 30,
+    servings: 4,
+    meal_type: meal_type,
+    dietary_tags: dietary_tags,
+    weather_preference: 'any',
+    protein_type: protein_type,
+    source: 'TheMealDB'
+  };
+}
+
 app.post('/api/generate-meal-plan', async (req, res) => {
   const weekStartDate = new Date().toISOString().split('T')[0];
   
@@ -587,48 +659,61 @@ app.post('/api/generate-meal-plan', async (req, res) => {
       console.log('Using default weather data');
     }
     
-    db.all("SELECT * FROM recipes", (err, recipes) => {
+    // Get both user recipes and TheMealDB recipes
+    const userRecipesPromise = new Promise((resolve, reject) => {
+      db.all("SELECT * FROM recipes", (err, recipes) => {
+        if (err) reject(err);
+        else {
+          const parsedRecipes = recipes.map(row => ({
+            ...row,
+            ingredients: JSON.parse(row.ingredients),
+            dietary_tags: JSON.parse(row.dietary_tags)
+          }));
+          resolve(parsedRecipes);
+        }
+      });
+    });
+
+    const [userRecipes, themealdbRecipes] = await Promise.all([
+      userRecipesPromise,
+      fetchTheMealDBRecipes(30)
+    ]);
+
+    // Combine user recipes with TheMealDB recipes
+    const allRecipes = [...userRecipes, ...themealdbRecipes];
+    console.log(`Using ${userRecipes.length} user recipes and ${themealdbRecipes.length} TheMealDB recipes for meal planning`);
+    
+    const mealPlan = generateOptimizedMealPlan(allRecipes, weatherData);
+    const shoppingList = generateShoppingList(mealPlan);
+    
+    // Only save user recipes to meal_plans table (not TheMealDB recipes)
+    db.run("DELETE FROM meal_plans WHERE week_start_date = ?", [weekStartDate], (err) => {
       if (err) {
         res.status(500).json({ error: err.message });
         return;
       }
       
-      const parsedRecipes = recipes.map(row => ({
-        ...row,
-        ingredients: JSON.parse(row.ingredients),
-        dietary_tags: JSON.parse(row.dietary_tags)
-      }));
-      
-      const mealPlan = generateOptimizedMealPlan(parsedRecipes, weatherData);
-      const shoppingList = generateShoppingList(mealPlan);
-      
-      db.run("DELETE FROM meal_plans WHERE week_start_date = ?", [weekStartDate], (err) => {
-        if (err) {
-          res.status(500).json({ error: err.message });
-          return;
-        }
-        
-        const insertPromises = [];
-        mealPlan.forEach((day, dayIndex) => {
-          ['breakfast', 'dinner'].forEach(mealType => {
-            if (day[mealType]) {
-              insertPromises.push(new Promise((resolve, reject) => {
-                db.run(
-                  "INSERT INTO meal_plans (week_start_date, day_of_week, meal_type, recipe_id) VALUES (?, ?, ?, ?)",
-                  [weekStartDate, dayIndex, mealType, day[mealType].id],
-                  (err) => err ? reject(err) : resolve()
-                );
-              }));
-            }
-          });
+      const insertPromises = [];
+      mealPlan.forEach((day, dayIndex) => {
+        ['breakfast', 'dinner'].forEach(mealType => {
+          if (day[mealType] && !day[mealType].id.toString().startsWith('themealdb-')) {
+            insertPromises.push(new Promise((resolve, reject) => {
+              db.run(
+                "INSERT INTO meal_plans (week_start_date, day_of_week, meal_type, recipe_id) VALUES (?, ?, ?, ?)",
+                [weekStartDate, dayIndex, mealType, day[mealType].id],
+                (err) => err ? reject(err) : resolve()
+              );
+            }));
+          }
         });
-        
-        Promise.all(insertPromises)
-          .then(() => res.json({ mealPlan, shoppingList, weather: weatherData }))
-          .catch(err => res.status(500).json({ error: err.message }));
       });
+      
+      Promise.all(insertPromises)
+        .then(() => res.json({ mealPlan, shoppingList, weather: weatherData }))
+        .catch(err => res.status(500).json({ error: err.message }));
     });
   } catch (error) {
+    console.error('Error generating meal plan:', error);
     res.status(500).json({ error: 'Failed to generate meal plan' });
   }
 });
