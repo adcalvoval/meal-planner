@@ -5,11 +5,12 @@ const sqlite3 = require('sqlite3').verbose();
 const multer = require('multer');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const pdf = require('pdf-parse');
 const { generateOptimizedMealPlan, generateShoppingList, addSampleRecipes } = require('./meal-planning-engine');
 const { convertRecipeToMetric } = require('./metric-converter');
 
 const app = express();
-const PORT = process.env.PORT || 4006;
+const PORT = process.env.PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
@@ -128,6 +129,130 @@ app.get('/api/recipes', (req, res) => {
     res.json(recipes);
   });
 });
+
+// PDF Upload endpoint for recipe extraction
+app.post('/api/upload-pdf-recipe', upload.single('pdf'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No PDF file uploaded' });
+  }
+
+  try {
+    // Extract text from PDF
+    const pdfBuffer = req.file.buffer || require('fs').readFileSync(req.file.path);
+    const pdfData = await pdf(pdfBuffer);
+    const extractedText = pdfData.text;
+
+    // Parse the extracted text to find recipe components
+    const parsedRecipe = parseRecipeFromText(extractedText);
+    
+    // Convert to metric if needed
+    const convertedRecipe = convertRecipeToMetric(parsedRecipe);
+    
+    res.json(convertedRecipe);
+  } catch (error) {
+    console.error('PDF parsing error:', error);
+    res.status(500).json({ error: 'Failed to extract recipe from PDF: ' + error.message });
+  }
+});
+
+// Helper function to parse recipe from extracted text
+function parseRecipeFromText(text) {
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  let recipe = {
+    name: '',
+    ingredients: [],
+    instructions: '',
+    prep_time: 0,
+    cook_time: 0,
+    servings: 4
+  };
+
+  // Try to extract recipe name (usually first line or a prominent heading)
+  if (lines.length > 0) {
+    recipe.name = lines[0].replace(/^(recipe|Recipe):?\s*/i, '').trim() || 'PDF Recipe';
+  }
+
+  // Look for ingredients section
+  let inIngredientsSection = false;
+  let inInstructionsSection = false;
+  let ingredientsStart = -1;
+  let instructionsStart = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase();
+    
+    // Detect ingredients section
+    if (line.includes('ingredients') || line.includes('what you need')) {
+      inIngredientsSection = true;
+      inInstructionsSection = false;
+      ingredientsStart = i + 1;
+      continue;
+    }
+    
+    // Detect instructions section
+    if (line.includes('instructions') || line.includes('method') || line.includes('directions') || 
+        line.includes('steps') || line.includes('preparation')) {
+      inIngredientsSection = false;
+      inInstructionsSection = true;
+      instructionsStart = i + 1;
+      continue;
+    }
+
+    // Extract time information
+    const timeMatch = line.match(/(\d+)\s*(min|minute|hour|hr)/i);
+    if (timeMatch) {
+      const minutes = parseInt(timeMatch[1]) * (timeMatch[2].toLowerCase().includes('hour') || timeMatch[2].toLowerCase().includes('hr') ? 60 : 1);
+      if (line.includes('prep') || line.includes('preparation')) {
+        recipe.prep_time = minutes;
+      } else if (line.includes('cook') || line.includes('bake')) {
+        recipe.cook_time = minutes;
+      }
+    }
+
+    // Extract servings
+    const servingMatch = line.match(/serves?\s*(\d+)|(\d+)\s*servings?/i);
+    if (servingMatch) {
+      recipe.servings = parseInt(servingMatch[1] || servingMatch[2]);
+    }
+
+    // Collect ingredients
+    if (inIngredientsSection && !inInstructionsSection && i >= ingredientsStart) {
+      // Look for lines that seem like ingredients (contain measurements, food items)
+      if (line.match(/\d+/) || line.match(/cup|tbsp|tsp|gram|kg|ml|liter|oz|pound|lb/i)) {
+        recipe.ingredients.push(lines[i]);
+      }
+    }
+  }
+
+  // Collect instructions (everything after instructions section)
+  if (instructionsStart > -1) {
+    const instructionLines = lines.slice(instructionsStart);
+    recipe.instructions = instructionLines.join('\n').trim();
+  }
+
+  // Fallback: if no specific sections found, try to extract ingredients by pattern
+  if (recipe.ingredients.length === 0) {
+    for (const line of lines) {
+      if (line.match(/^\d+/) || line.match(/cup|tbsp|tsp|gram|kg|ml|liter|oz|pound|lb/i)) {
+        recipe.ingredients.push(line);
+      }
+    }
+  }
+
+  // Fallback: use remaining text as instructions if none found
+  if (!recipe.instructions && lines.length > recipe.ingredients.length + 2) {
+    const remainingLines = lines.filter(line => 
+      !recipe.ingredients.includes(line) && 
+      line !== recipe.name &&
+      !line.toLowerCase().includes('ingredients') &&
+      !line.toLowerCase().includes('instructions')
+    );
+    recipe.instructions = remainingLines.join('\n').trim();
+  }
+
+  return recipe;
+}
 
 app.post('/api/scrape-recipe', async (req, res) => {
   const { url } = req.body;

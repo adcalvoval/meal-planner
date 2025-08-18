@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import PDFUpload from './PDFUpload';
 
 const RecipeUpload = ({ onAddRecipe }) => {
+  const [uploadMode, setUploadMode] = useState('manual'); // 'manual' or 'pdf'
   const [recipe, setRecipe] = useState({
     name: '',
     ingredients: [''],
@@ -86,9 +88,40 @@ const RecipeUpload = ({ onAddRecipe }) => {
 
   const dietaryOptions = ['vegetarian', 'pescatarian', 'kid-friendly', 'quick', 'healthy', 'comfort'];
 
+  const handlePDFRecipeParsed = (pdfRecipe) => {
+    onAddRecipe(pdfRecipe);
+  };
+
+  if (uploadMode === 'pdf') {
+    return (
+      <PDFUpload
+        onRecipeParsed={handlePDFRecipeParsed}
+        onCancel={() => setUploadMode('manual')}
+      />
+    );
+  }
+
   return (
     <div className="recipe-upload">
-      <h2>Add New Recipe</h2>
+      <div className="upload-mode-selector">
+        <h2>Add New Recipe</h2>
+        <div className="upload-options">
+          <button
+            type="button"
+            className={`mode-btn ${uploadMode === 'manual' ? 'active' : ''}`}
+            onClick={() => setUploadMode('manual')}
+          >
+            Manual Entry
+          </button>
+          <button
+            type="button"
+            className={`mode-btn ${uploadMode === 'pdf' ? 'active' : ''}`}
+            onClick={() => setUploadMode('pdf')}
+          >
+            Upload PDF
+          </button>
+        </div>
+      </div>
       <form onSubmit={handleSubmit} className="recipe-form">
         <div className="form-group">
           <label htmlFor="name">Recipe Name:</label>

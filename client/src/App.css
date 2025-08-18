@@ -512,6 +512,146 @@ body {
   font-size: 1.1rem;
 }
 
+/* PDF Upload Styles */
+.upload-mode-selector {
+  margin-bottom: 2rem;
+}
+
+.upload-options {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.mode-btn {
+  background: #f0f0f0;
+  color: #666;
+  border: 2px solid #e0e0e0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.mode-btn:hover {
+  background: #e8eaff;
+  border-color: #667eea;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.pdf-upload-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.pdf-upload-area {
+  border: 2px dashed #667eea;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  margin: 1.5rem 0;
+  background: #f8f9ff;
+  transition: all 0.3s ease;
+}
+
+.pdf-upload-area:hover {
+  border-color: #764ba2;
+  background: #f0f2ff;
+}
+
+.pdf-file-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.pdf-file-input:hover {
+  border-color: #667eea;
+}
+
+.pdf-file-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loading {
+  color: #667eea;
+  font-size: 1rem;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+.pdf-upload-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pdf-recipe-editor {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.pdf-recipe-editor h2 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.pdf-recipe-editor p {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.pdf-recipe-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.add-ingredient-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.add-ingredient-btn:hover {
+  background: #45a049;
+}
+
+.dietary-tags-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 /* Clickable Recipe Cards */
 .clickable-recipe {
   cursor: pointer;
