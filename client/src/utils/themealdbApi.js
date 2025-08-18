@@ -186,7 +186,7 @@ export const themealdbApi = {
     const { category, area, ingredient, count = 10 } = preferences;
     
     try {
-      let recipes = [];
+      let recipes;
       
       if (category) {
         recipes = await themealdbApi.filterByCategory(category);
