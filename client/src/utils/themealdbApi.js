@@ -166,7 +166,6 @@ export const themealdbApi = {
   // Get multiple random recipes for meal planning
   getRandomRecipes: async (count = 10) => {
     try {
-      const recipes = [];
       const promises = [];
       
       for (let i = 0; i < count; i++) {
