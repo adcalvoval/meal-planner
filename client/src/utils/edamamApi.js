@@ -10,7 +10,8 @@ const EDAMAM_CONFIG = {
   isConfigured: function() {
     console.log('🔍 Edamam Config Check:', {
       app_id: this.app_id,
-      app_key: this.app_key ? 'SET' : 'NOT SET',
+      app_key: this.app_key ? `${this.app_key.substring(0, 8)}...` : 'NOT SET',
+      app_key_length: this.app_key ? this.app_key.length : 0,
       result: !!(this.app_id && this.app_key)
     });
     return !!(this.app_id && this.app_key);
