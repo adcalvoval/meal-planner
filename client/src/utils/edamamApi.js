@@ -179,6 +179,12 @@ export const edamamApi = {
       return transformedRecipes;
     } catch (error) {
       console.error('Error searching Edamam recipes:', error);
+      
+      // Show user-friendly error for authentication issues
+      if (error.message.includes('Invalid Edamam API credentials')) {
+        console.warn('🚨 Edamam API credentials are invalid. Please check your App ID and App Key.');
+      }
+      
       return [];
     }
   },
