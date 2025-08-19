@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { themealdbApi } from '../utils/themealdbApi';
+import { spoonacularApi } from '../utils/spoonacularApi';
 
 const TheMealDBBrowser = ({ onAddRecipe }) => {
   const [recipes, setRecipes] = useState([]);
@@ -8,8 +9,12 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  // Remove activeSource since we only have TheMealDB now
-  // const [activeSource, setActiveSource] = useState('themealdb');
+  const [activeSource, setActiveSource] = useState('themealdb');
+  const [spoonacularOptions, setSpoonacularOptions] = useState({
+    cuisine: '',
+    diet: '',
+    type: ''
+  });
 
   useEffect(() => {
     loadCategories();
@@ -23,8 +28,31 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
   };
 
   const loadRandomRecipes = async () => {
+    console.log('🔍 loadRandomRecipes called with activeSource:', activeSource);
+    console.log('🔍 spoonacularApi.isConfigured():', spoonacularApi.isConfigured());
     setLoading(true);
-    const randomRecipes = await themealdbApi.getRandomRecipes(12);
+    let randomRecipes = [];
+    
+    if (activeSource === 'themealdb') {
+      console.log('🔍 Loading TheMealDB recipes');
+      randomRecipes = await themealdbApi.getRandomRecipes(12);
+    } else if (activeSource === 'spoonacular' && spoonacularApi.isConfigured()) {
+      console.log('🔍 Loading Spoonacular recipes');
+      randomRecipes = await spoonacularApi.getRandomRecipes(12);
+    } else if (activeSource === 'both') {
+      console.log('🔍 Loading both sources');
+      const [themealdbRecipes, spoonacularRecipes] = await Promise.all([
+        themealdbApi.getRandomRecipes(6),
+        spoonacularApi.isConfigured() ? spoonacularApi.getRandomRecipes(6) : Promise.resolve([])
+      ]);
+      randomRecipes = [...themealdbRecipes, ...spoonacularRecipes];
+      // Shuffle the combined results
+      randomRecipes = randomRecipes.sort(() => 0.5 - Math.random());
+    } else {
+      console.log('🔍 No valid source configuration found');
+    }
+    
+    console.log('🔍 Final randomRecipes:', randomRecipes.length, 'recipes');
     setRecipes(randomRecipes);
     setLoading(false);
   };
@@ -50,7 +78,20 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
     }
     
     setLoading(true);
-    const searchResults = await themealdbApi.searchByName(searchTerm);
+    let searchResults = [];
+    
+    if (activeSource === 'themealdb') {
+      searchResults = await themealdbApi.searchByName(searchTerm);
+    } else if (activeSource === 'spoonacular' && spoonacularApi.isConfigured()) {
+      searchResults = await spoonacularApi.searchRecipes(searchTerm, spoonacularOptions);
+    } else if (activeSource === 'both') {
+      const [themealdbResults, spoonacularResults] = await Promise.all([
+        themealdbApi.searchByName(searchTerm),
+        spoonacularApi.isConfigured() ? spoonacularApi.searchRecipes(searchTerm, spoonacularOptions) : Promise.resolve([])
+      ]);
+      searchResults = [...themealdbResults, ...spoonacularResults];
+    }
+    
     setRecipes(searchResults);
     setLoading(false);
   };
@@ -153,10 +194,53 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
   return (
     <div className="themealdb-browser">
       <div className="browser-header">
-        <h2>Discover Recipes</h2>
-        <p>Browse thousands of recipes from TheMealDB</p>
+        <h2>Discover Recipes from Multiple Sources</h2>
+        <p>Browse thousands of recipes from TheMealDB{spoonacularApi.isConfigured() ? ' and Spoonacular' : ''}</p>
       </div>
 
+      <div className="source-selector">
+        <div className="source-tabs">
+          <button
+            className={`source-tab ${activeSource === 'themealdb' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveSource('themealdb');
+              setSelectedCategory('');
+              loadRandomRecipes();
+            }}
+          >
+            TheMealDB
+          </button>
+          {spoonacularApi.isConfigured() && (
+            <>
+              <button
+                className={`source-tab ${activeSource === 'spoonacular' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveSource('spoonacular');
+                  setSelectedCategory('');
+                  loadRandomRecipes();
+                }}
+              >
+                Spoonacular
+              </button>
+              <button
+                className={`source-tab ${activeSource === 'both' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveSource('both');
+                  setSelectedCategory('');
+                  loadRandomRecipes();
+                }}
+              >
+                Both Sources
+              </button>
+            </>
+          )}
+          {!spoonacularApi.isConfigured() && (
+            <div className="api-config-notice">
+              <small>💡 Add Spoonacular API key to access millions more recipes</small>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="browser-controls">
         <form onSubmit={handleSearch} className="search-form">
@@ -172,22 +256,73 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
           <button type="submit" className="search-btn">Search</button>
         </form>
 
-        <div className="category-filter">
-          <select
-            id="category-select"
-            name="category"
-            value={selectedCategory}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="category-select"
-          >
-            <option value="">All Categories</option>
-            {categories.map(category => (
-              <option key={category.idCategory} value={category.strCategory}>
-                {category.strCategory}
-              </option>
-            ))}
-          </select>
-        </div>
+        {activeSource === 'themealdb' && (
+          <div className="category-filter">
+            <select
+              id="category-select"
+              name="category"
+              value={selectedCategory}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className="category-select"
+            >
+              <option value="">All Categories</option>
+              {categories.map(category => (
+                <option key={category.idCategory} value={category.strCategory}>
+                  {category.strCategory}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {(activeSource === 'spoonacular' || activeSource === 'both') && spoonacularApi.isConfigured() && (
+          <div className="spoonacular-filters">
+            <select
+              id="spoonacular-cuisine-select"
+              name="spoonacularCuisine"
+              value={spoonacularOptions.cuisine}
+              onChange={(e) => setSpoonacularOptions(prev => ({ ...prev, cuisine: e.target.value }))}
+              className="spoonacular-select"
+            >
+              <option value="">Any Cuisine</option>
+              {spoonacularApi.getCuisineOptions().map(cuisine => (
+                <option key={cuisine} value={cuisine}>
+                  {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              id="spoonacular-diet-select"
+              name="spoonacularDiet"
+              value={spoonacularOptions.diet}
+              onChange={(e) => setSpoonacularOptions(prev => ({ ...prev, diet: e.target.value }))}
+              className="spoonacular-select"
+            >
+              <option value="">Any Diet</option>
+              {spoonacularApi.getDietOptions().map(diet => (
+                <option key={diet} value={diet}>
+                  {diet.charAt(0).toUpperCase() + diet.slice(1).replace(' ', ' ')}
+                </option>
+              ))}
+            </select>
+
+            <select
+              id="spoonacular-type-select"
+              name="spoonacularType"
+              value={spoonacularOptions.type}
+              onChange={(e) => setSpoonacularOptions(prev => ({ ...prev, type: e.target.value }))}
+              className="spoonacular-select"
+            >
+              <option value="">Any Type</option>
+              {spoonacularApi.getTypeOptions().map(type => (
+                <option key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button onClick={loadRandomRecipes} className="random-btn">
           🎲 Random Recipes
