@@ -148,6 +148,8 @@ const PDFUpload = ({ onRecipeParsed, onCancel }) => {
         <div className="form-group">
           <label>Recipe Name</label>
           <input
+            id="pdf-recipe-name"
+            name="pdfRecipeName"
             type="text"
             value={editedRecipe.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
@@ -226,6 +228,8 @@ const PDFUpload = ({ onRecipeParsed, onCancel }) => {
           {editedRecipe.ingredients.map((ingredient, index) => (
             <div key={index} className="ingredient-input">
               <input
+                id={`pdf-ingredient-${index}`}
+                name={`pdfIngredient${index}`}
                 type="text"
                 value={ingredient}
                 onChange={(e) => handleIngredientChange(index, e.target.value)}
@@ -261,6 +265,8 @@ const PDFUpload = ({ onRecipeParsed, onCancel }) => {
             {['quick', 'healthy', 'kid-friendly', 'comfort', 'pescatarian', 'spicy'].map(tag => (
               <label key={tag} className="checkbox-label">
                 <input
+                  id={`pdf-dietary-${tag}`}
+                  name={`pdfDietary${tag}`}
                   type="checkbox"
                   checked={(editedRecipe.dietary_tags || []).includes(tag)}
                   onChange={(e) => handleDietaryTagChange(tag, e.target.checked)}

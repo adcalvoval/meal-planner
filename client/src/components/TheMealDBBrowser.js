@@ -245,6 +245,8 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
       <div className="browser-controls">
         <form onSubmit={handleSearch} className="search-form">
           <input
+            id="recipe-search-input"
+            name="recipeSearch"
             type="text"
             placeholder="Search recipes..."
             value={searchTerm}
@@ -257,6 +259,8 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
         {activeSource === 'themealdb' && (
           <div className="category-filter">
             <select
+              id="category-select"
+              name="category"
               value={selectedCategory}
               onChange={(e) => handleCategoryChange(e.target.value)}
               className="category-select"
@@ -274,6 +278,8 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
         {(activeSource === 'edamam' || activeSource === 'both') && edamamApi.isConfigured() && (
           <div className="edamam-filters">
             <select
+              id="edamam-diet-select"
+              name="edamamDiet"
               value={edamamOptions.diet}
               onChange={(e) => setEdamamOptions(prev => ({ ...prev, diet: e.target.value }))}
               className="edamam-select"
@@ -287,6 +293,8 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
             </select>
 
             <select
+              id="edamam-cuisine-select"
+              name="edamamCuisine"
               value={edamamOptions.cuisine}
               onChange={(e) => setEdamamOptions(prev => ({ ...prev, cuisine: e.target.value }))}
               className="edamam-select"
@@ -300,6 +308,8 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
             </select>
 
             <select
+              id="edamam-health-select"
+              name="edamamHealth"
               value={edamamOptions.health}
               onChange={(e) => setEdamamOptions(prev => ({ ...prev, health: e.target.value }))}
               className="edamam-select"
