@@ -6,6 +6,45 @@ const MealPlanView = ({ mealPlanData, onGeneratePlan, loading }) => {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const { mealPlan, shoppingList, weather } = mealPlanData;
 
+  // Function to export shopping list to Google Keep
+  const exportToGoogleKeep = () => {
+    if (!shoppingList || shoppingList.length === 0) {
+      alert('No shopping list to export. Generate a meal plan first!');
+      return;
+    }
+
+    try {
+      // Create the shopping list text
+      const currentDate = new Date().toLocaleDateString();
+      const title = `Weekly Shopping List - ${currentDate}`;
+      
+      // Group items by frequency for better organization
+      const singleItems = shoppingList.filter(item => item.frequency === 1);
+      const multipleItems = shoppingList.filter(item => item.frequency > 1);
+      
+      let listItems = '';
+      
+      if (singleItems.length > 0) {
+        listItems += singleItems.map(item => `• ${item.ingredient}`).join('\n');
+      }
+      
+      if (multipleItems.length > 0) {
+        if (singleItems.length > 0) listItems += '\n\n';
+        listItems += 'Multiple recipes:\n' + 
+          multipleItems.map(item => `• ${item.ingredient} (${item.frequency} recipes)`).join('\n');
+      }
+      
+      // Create Google Keep URL with pre-filled content
+      const googleKeepUrl = `https://keep.google.com/u/0/#NOTE/new?title=${encodeURIComponent(title)}&text=${encodeURIComponent(listItems)}`;
+      
+      // Open Google Keep in a new tab
+      window.open(googleKeepUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Error exporting to Google Keep:', error);
+      alert('Failed to export to Google Keep. Please try again.');
+    }
+  };
+
   return (
     <div className="meal-plan-view">
       <div className="meal-plan-header">
@@ -38,7 +77,16 @@ const MealPlanView = ({ mealPlanData, onGeneratePlan, loading }) => {
       
       {showShoppingList && shoppingList && (
         <div className="shopping-list">
-          <h3>Shopping List</h3>
+          <div className="shopping-list-header">
+            <h3>Shopping List</h3>
+            <button 
+              onClick={exportToGoogleKeep}
+              className="google-keep-btn"
+              title="Export to Google Keep"
+            >
+              📝 Export to Google Keep
+            </button>
+          </div>
           <div className="shopping-items">
             {shoppingList.map((item, index) => (
               <div key={index} className="shopping-item">
