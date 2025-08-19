@@ -54,13 +54,14 @@ const MealPlanView = ({ mealPlanData, onGeneratePlan, loading }) => {
       return;
     }
 
-    try {
-      const listText = shoppingList.map(item => {
-        const ingredient = item.ingredient;
-        const note = item.frequency > 1 ? ` (${item.frequency}x)` : '';
-        return ingredient + note;
-      }).join('\n');
+    // Create the list text outside try block so it's accessible in catch
+    const listText = shoppingList.map(item => {
+      const ingredient = item.ingredient;
+      const note = item.frequency > 1 ? ` (${item.frequency}x)` : '';
+      return ingredient + note;
+    }).join('\n');
 
+    try {
       await navigator.clipboard.writeText(listText);
       alert('✅ Shopping list copied to clipboard!\n\nYou can now paste it into any app:\n• Google Keep\n• Notes app\n• Text message\n• Email');
     } catch (error) {
