@@ -594,13 +594,10 @@ function transformMealDBRecipe(mealDBRecipe) {
     }
   }
 
+  // All recipes are dinner only
   let meal_type = 'dinner';
   const category = mealDBRecipe.strCategory?.toLowerCase() || '';
   const tags = mealDBRecipe.strTags?.toLowerCase() || '';
-  
-  if (category.includes('breakfast') || tags.includes('breakfast')) {
-    meal_type = 'breakfast';
-  }
 
   let protein_type = 'meat';
   if (category.includes('vegetarian') || tags.includes('vegetarian')) {
@@ -695,7 +692,7 @@ app.post('/api/generate-meal-plan', async (req, res) => {
       
       const insertPromises = [];
       mealPlan.forEach((day, dayIndex) => {
-        ['breakfast', 'dinner'].forEach(mealType => {
+        ['dinner'].forEach(mealType => {
           if (day[mealType] && !day[mealType].id.toString().startsWith('themealdb-')) {
             insertPromises.push(new Promise((resolve, reject) => {
               db.run(

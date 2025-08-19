@@ -35,14 +35,8 @@ const transformSpoonacularRecipe = (spoonacularRecipe, detailedInfo = null) => {
     ingredients = [];
   }
 
-  // Determine meal type based on dish types
+  // All recipes are dinner only
   let meal_type = 'dinner';
-  const dishTypes = recipe.dishTypes || [];
-  if (dishTypes.some(type => type.includes('breakfast'))) {
-    meal_type = 'breakfast';
-  } else if (dishTypes.some(type => type.includes('lunch'))) {
-    meal_type = 'dinner'; // Map lunch to dinner in our system
-  }
 
   // Determine protein type based on diet labels
   let protein_type = 'meat';

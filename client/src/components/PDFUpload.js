@@ -194,7 +194,6 @@ const PDFUpload = ({ onRecipeParsed, onCancel }) => {
               value={editedRecipe.meal_type}
               onChange={(e) => handleInputChange('meal_type', e.target.value)}
             >
-              <option value="breakfast">Breakfast</option>
               <option value="dinner">Dinner</option>
             </select>
           </div>

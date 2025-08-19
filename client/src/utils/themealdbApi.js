@@ -14,14 +14,10 @@ const transformMealDBRecipe = (mealDBRecipe) => {
     }
   }
 
-  // Determine meal type based on category and tags
+  // All recipes are dinner only
   let meal_type = 'dinner';
   const category = mealDBRecipe.strCategory?.toLowerCase() || '';
   const tags = mealDBRecipe.strTags?.toLowerCase() || '';
-  
-  if (category.includes('breakfast') || tags.includes('breakfast')) {
-    meal_type = 'breakfast';
-  }
 
   // Determine protein type
   let protein_type = 'meat';

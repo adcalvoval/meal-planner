@@ -176,7 +176,6 @@ const RecipeEditForm = ({ recipe, onSave, onCancel }) => {
               value={editedRecipe.meal_type}
               onChange={handleInputChange}
             >
-              <option value="breakfast">Breakfast</option>
               <option value="dinner">Dinner</option>
             </select>
           </div>

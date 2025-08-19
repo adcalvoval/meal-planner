@@ -216,7 +216,6 @@ const RecipeUpload = ({ onAddRecipe }) => {
               value={recipe.meal_type}
               onChange={handleInputChange}
             >
-              <option value="breakfast">Breakfast</option>
               <option value="dinner">Dinner</option>
             </select>
           </div>

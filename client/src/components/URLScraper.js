@@ -227,7 +227,6 @@ const URLScraper = ({ onAddRecipe }) => {
                 value={scrapedRecipe.meal_type}
                 onChange={(e) => handleRecipeChange('meal_type', e.target.value)}
               >
-                <option value="breakfast">Breakfast</option>
                 <option value="dinner">Dinner</option>
               </select>
             </div>

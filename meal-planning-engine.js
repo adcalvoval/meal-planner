@@ -23,11 +23,10 @@ function generateOptimizedMealPlan(recipes, weather = { isHot: false, isCold: fa
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const mealPlan = [];
   
-  const breakfastRecipes = recipes.filter(r => r.meal_type === 'breakfast');
+  // Only dinner recipes - breakfast removed from meal planning
   const dinnerRecipes = recipes.filter(r => r.meal_type === 'dinner');
   
-  // Create separate tracking for used recipes
-  const usedBreakfastIds = new Set();
+  // Create tracking for used recipes
   const usedDinnerIds = new Set();
   const proteinBalance = { meat: 0, fish: 0, vegetarian: 0 };
   
@@ -82,20 +81,7 @@ function generateOptimizedMealPlan(recipes, weather = { isHot: false, isCold: fa
   days.forEach((day, index) => {
     const dayPlan = { day: day };
     
-    // BREAKFAST SELECTION with better variety
-    if (breakfastRecipes.length > 0) {
-      const selectedBreakfast = selectRecipeWithVariety(breakfastRecipes, usedBreakfastIds);
-      
-      if (selectedBreakfast) {
-        dayPlan.breakfast = selectedBreakfast;
-        usedBreakfastIds.add(selectedBreakfast.id);
-        
-        // Reset breakfast variety if we've used all recipes
-        if (usedBreakfastIds.size === breakfastRecipes.length) {
-          usedBreakfastIds.clear();
-        }
-      }
-    }
+    // No breakfast planning - dinner only
     
     // DINNER SELECTION with strategic variety
     if (dinnerRecipes.length > 0) {
@@ -160,20 +146,19 @@ function generateShoppingList(mealPlan) {
   const ingredients = new Map();
   
   mealPlan.forEach(day => {
-    [day.breakfast, day.dinner].forEach(recipe => {
-      if (recipe && recipe.ingredients) {
-        recipe.ingredients.forEach(ingredient => {
-          // Convert to metric if needed
-          const metricIngredient = convertIngredientToMetric(ingredient);
-          const normalizedIngredient = metricIngredient.toLowerCase().trim();
-          if (ingredients.has(normalizedIngredient)) {
-            ingredients.set(normalizedIngredient, ingredients.get(normalizedIngredient) + 1);
-          } else {
-            ingredients.set(normalizedIngredient, 1);
-          }
-        });
-      }
-    });
+    // Only process dinner recipes now
+    if (day.dinner && day.dinner.ingredients) {
+      day.dinner.ingredients.forEach(ingredient => {
+        // Convert to metric if needed
+        const metricIngredient = convertIngredientToMetric(ingredient);
+        const normalizedIngredient = metricIngredient.toLowerCase().trim();
+        if (ingredients.has(normalizedIngredient)) {
+          ingredients.set(normalizedIngredient, ingredients.get(normalizedIngredient) + 1);
+        } else {
+          ingredients.set(normalizedIngredient, 1);
+        }
+      });
+    }
   });
   
   return Array.from(ingredients.entries()).map(([ingredient, count]) => ({
@@ -184,30 +169,6 @@ function generateShoppingList(mealPlan) {
 
 function addSampleRecipes(db) {
   const sampleRecipes = [
-    {
-      name: "Scrambled Eggs with Toast",
-      ingredients: ["4 eggs", "2 slices bread", "15g butter", "salt", "pepper"],
-      instructions: "Beat eggs, scramble in buttered pan. Toast bread. Serve together.",
-      prep_time: 5,
-      cook_time: 10,
-      servings: 2,
-      meal_type: "breakfast",
-      dietary_tags: ["quick", "kid-friendly"],
-      weather_preference: "any",
-      protein_type: "vegetarian"
-    },
-    {
-      name: "Overnight Oats",
-      ingredients: ["80g oats", "250ml milk", "30ml honey", "100g berries"],
-      instructions: "Mix oats, milk, honey. Refrigerate overnight. Top with berries.",
-      prep_time: 5,
-      cook_time: 0,
-      servings: 2,
-      meal_type: "breakfast",
-      dietary_tags: ["healthy", "quick"],
-      weather_preference: "any",
-      protein_type: "vegetarian"
-    },
     {
       name: "Fish and Chips",
       ingredients: ["4 fish fillets (600g)", "800g potatoes", "oil for frying", "100g flour", "beer batter"],
