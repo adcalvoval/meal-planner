@@ -160,7 +160,10 @@ export const edamamApi = {
         }
       });
 
+      console.log('🔍 Edamam API response status:', response.status);
+
       if (!response.ok) {
+        console.error('🔍 Edamam API error response:', response.status, response.statusText);
         if (response.status === 401) {
           throw new Error('Invalid Edamam API credentials');
         } else if (response.status === 429) {
@@ -170,7 +173,10 @@ export const edamamApi = {
       }
 
       const data = await response.json();
-      return (data.hits || []).map(transformEdamamRecipe);
+      console.log('🔍 Edamam API returned', data.hits?.length || 0, 'recipes');
+      const transformedRecipes = (data.hits || []).map(transformEdamamRecipe);
+      console.log('🔍 Transformed to', transformedRecipes.length, 'recipes');
+      return transformedRecipes;
     } catch (error) {
       console.error('Error searching Edamam recipes:', error);
       return [];
