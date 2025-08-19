@@ -62,33 +62,6 @@ const MealPlanView = ({ mealPlanData, onGeneratePlan, loading }) => {
               <h3>{dayPlan.day}</h3>
               
               <div className="meal">
-                <h4>Breakfast</h4>
-                {dayPlan.breakfast ? (
-                  <div 
-                    className="recipe-card clickable-recipe" 
-                    onClick={() => setSelectedRecipe(dayPlan.breakfast)}
-                  >
-                    <h5>{dayPlan.breakfast.name}</h5>
-                    <p className="prep-time">
-                      {dayPlan.breakfast.prep_time + dayPlan.breakfast.cook_time} mins
-                    </p>
-                    <p className="servings">Serves {dayPlan.breakfast.servings}</p>
-                    {dayPlan.breakfast.dietary_tags && (
-                      <div className="dietary-tags">
-                        {dayPlan.breakfast.dietary_tags.map((tag, i) => (
-                          <span key={i} className="tag">{tag}</span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="click-hint">Click for details</div>
-                  </div>
-                ) : (
-                  <p>No breakfast planned</p>
-                )}
-              </div>
-              
-              <div className="meal">
-                <h4>Dinner</h4>
                 {dayPlan.dinner ? (
                   <div 
                     className="recipe-card clickable-recipe" 
