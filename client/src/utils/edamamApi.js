@@ -184,6 +184,8 @@ export const edamamApi = {
       // Show user-friendly error for authentication issues
       if (error.message.includes('Invalid Edamam API credentials')) {
         console.warn('🚨 Edamam API credentials are invalid. Please check your App ID and App Key.');
+        console.warn('💡 Make sure you created a "Recipe Search API" application in Edamam, not "Nutrition Analysis API"');
+        console.warn('💡 Check your usage limits in the Edamam dashboard');
       }
       
       return [];
