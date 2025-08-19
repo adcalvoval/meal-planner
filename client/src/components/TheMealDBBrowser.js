@@ -30,7 +30,9 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
   const loadRandomRecipes = async () => {
     console.log('🔍 loadRandomRecipes called with activeSource:', activeSource);
     console.log('🔍 spoonacularApi.isConfigured():', spoonacularApi.isConfigured());
+    
     setLoading(true);
+    setRecipes([]); // Clear existing recipes immediately when switching sources
     let randomRecipes = [];
     
     if (activeSource === 'themealdb') {
@@ -53,6 +55,7 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
     }
     
     console.log('🔍 Final randomRecipes:', randomRecipes.length, 'recipes');
+    console.log('🔍 Recipe sources:', randomRecipes.map(r => r.source));
     setRecipes(randomRecipes);
     setLoading(false);
   };
@@ -78,13 +81,17 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
     }
     
     setLoading(true);
+    setRecipes([]); // Clear existing recipes immediately
     let searchResults = [];
     
     if (activeSource === 'themealdb') {
+      console.log('🔍 Searching TheMealDB for:', searchTerm);
       searchResults = await themealdbApi.searchByName(searchTerm);
     } else if (activeSource === 'spoonacular' && spoonacularApi.isConfigured()) {
+      console.log('🔍 Searching Spoonacular for:', searchTerm, 'with options:', spoonacularOptions);
       searchResults = await spoonacularApi.searchRecipes(searchTerm, spoonacularOptions);
     } else if (activeSource === 'both') {
+      console.log('🔍 Searching both sources for:', searchTerm);
       const [themealdbResults, spoonacularResults] = await Promise.all([
         themealdbApi.searchByName(searchTerm),
         spoonacularApi.isConfigured() ? spoonacularApi.searchRecipes(searchTerm, spoonacularOptions) : Promise.resolve([])
@@ -92,6 +99,8 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
       searchResults = [...themealdbResults, ...spoonacularResults];
     }
     
+    console.log('🔍 Search results:', searchResults.length, 'recipes');
+    console.log('🔍 Search result sources:', searchResults.map(r => r.source));
     setRecipes(searchResults);
     setLoading(false);
   };
@@ -203,9 +212,11 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
           <button
             className={`source-tab ${activeSource === 'themealdb' ? 'active' : ''}`}
             onClick={() => {
+              console.log('🔍 Switching to TheMealDB source');
+              setRecipes([]); // Clear recipes immediately
               setActiveSource('themealdb');
               setSelectedCategory('');
-              loadRandomRecipes();
+              setTimeout(() => loadRandomRecipes(), 0); // Load after state updates
             }}
           >
             TheMealDB
@@ -215,9 +226,11 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
               <button
                 className={`source-tab ${activeSource === 'spoonacular' ? 'active' : ''}`}
                 onClick={() => {
+                  console.log('🔍 Switching to Spoonacular source');
+                  setRecipes([]); // Clear recipes immediately
                   setActiveSource('spoonacular');
                   setSelectedCategory('');
-                  loadRandomRecipes();
+                  setTimeout(() => loadRandomRecipes(), 0); // Load after state updates
                 }}
               >
                 Spoonacular
@@ -225,9 +238,11 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
               <button
                 className={`source-tab ${activeSource === 'both' ? 'active' : ''}`}
                 onClick={() => {
+                  console.log('🔍 Switching to Both sources');
+                  setRecipes([]); // Clear recipes immediately
                   setActiveSource('both');
                   setSelectedCategory('');
-                  loadRandomRecipes();
+                  setTimeout(() => loadRandomRecipes(), 0); // Load after state updates
                 }}
               >
                 Both Sources
@@ -375,7 +390,13 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
 
       {recipes.length === 0 && !loading && (
         <div className="no-results">
-          <p>No recipes found. Try a different search term or category.</p>
+          {activeSource === 'spoonacular' && !spoonacularApi.isConfigured() ? (
+            <p>Spoonacular API not configured. Please add your API key to environment variables.</p>
+          ) : activeSource === 'spoonacular' ? (
+            <p>No Spoonacular recipes found. Try a different search term or check your API connection.</p>
+          ) : (
+            <p>No recipes found. Try a different search term or category.</p>
+          )}
         </div>
       )}
 
