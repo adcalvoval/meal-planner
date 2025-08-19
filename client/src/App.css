@@ -134,9 +134,12 @@ body {
   margin: 0;
 }
 
-.google-keep-btn {
-  background: #FFC107;
-  color: #333;
+.export-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.copy-btn, .google-keep-btn {
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -149,10 +152,38 @@ body {
   gap: 0.3rem;
 }
 
+.copy-btn {
+  background: #6C757D;
+  color: white;
+}
+
+.copy-btn:hover {
+  background: #5A6268;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(108, 117, 125, 0.4);
+}
+
+.google-keep-btn {
+  background: #FFC107;
+  color: #333;
+}
+
 .google-keep-btn:hover {
   background: #FFB300;
   transform: translateY(-1px);
   box-shadow: 0 3px 10px rgba(255, 193, 7, 0.4);
+}
+
+@media (max-width: 768px) {
+  .export-buttons {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  .copy-btn, .google-keep-btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
 }
 
 .shopping-items {

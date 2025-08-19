@@ -14,34 +14,65 @@ const MealPlanView = ({ mealPlanData, onGeneratePlan, loading }) => {
     }
 
     try {
-      // Create the shopping list text
+      // Create the shopping list text optimized for easy conversion to checklist
       const currentDate = new Date().toLocaleDateString();
-      const title = `Weekly Shopping List - ${currentDate}`;
+      const title = `Shopping List ${currentDate}`;
       
-      // Group items by frequency for better organization
-      const singleItems = shoppingList.filter(item => item.frequency === 1);
-      const multipleItems = shoppingList.filter(item => item.frequency > 1);
+      // Create a simple list format that's easy to convert to checkboxes
+      // Each item on a new line without bullet points (Google Keep adds checkboxes easier this way)
+      let listItems = shoppingList.map(item => {
+        const ingredient = item.ingredient;
+        const note = item.frequency > 1 ? ` (${item.frequency}x)` : '';
+        return ingredient + note;
+      }).join('\n');
       
-      let listItems = '';
-      
-      if (singleItems.length > 0) {
-        listItems += singleItems.map(item => `• ${item.ingredient}`).join('\n');
-      }
-      
-      if (multipleItems.length > 0) {
-        if (singleItems.length > 0) listItems += '\n\n';
-        listItems += 'Multiple recipes:\n' + 
-          multipleItems.map(item => `• ${item.ingredient} (${item.frequency} recipes)`).join('\n');
-      }
+      // Add helpful instruction at the top
+      const instructions = 'Tip: Click the checkbox icon in Google Keep to convert this to a checklist!\n\n';
+      listItems = instructions + listItems;
       
       // Create Google Keep URL with pre-filled content
       const googleKeepUrl = `https://keep.google.com/u/0/#NOTE/new?title=${encodeURIComponent(title)}&text=${encodeURIComponent(listItems)}`;
       
       // Open Google Keep in a new tab
       window.open(googleKeepUrl, '_blank', 'noopener,noreferrer');
+      
+      // Show user instruction
+      setTimeout(() => {
+        alert('📝 Google Keep opened!\n\nTo create a checklist:\n1. Click the checklist icon (☑️) at the bottom of the note\n2. Your ingredients will become checkable items\n3. Save the note');
+      }, 1000);
+      
     } catch (error) {
       console.error('Error exporting to Google Keep:', error);
       alert('Failed to export to Google Keep. Please try again.');
+    }
+  };
+
+  // Function to copy shopping list to clipboard for easy pasting
+  const copyToClipboard = async () => {
+    if (!shoppingList || shoppingList.length === 0) {
+      alert('No shopping list to copy. Generate a meal plan first!');
+      return;
+    }
+
+    try {
+      const listText = shoppingList.map(item => {
+        const ingredient = item.ingredient;
+        const note = item.frequency > 1 ? ` (${item.frequency}x)` : '';
+        return ingredient + note;
+      }).join('\n');
+
+      await navigator.clipboard.writeText(listText);
+      alert('✅ Shopping list copied to clipboard!\n\nYou can now paste it into any app:\n• Google Keep\n• Notes app\n• Text message\n• Email');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = listText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('✅ Shopping list copied to clipboard!');
     }
   };
 
@@ -79,13 +110,22 @@ const MealPlanView = ({ mealPlanData, onGeneratePlan, loading }) => {
         <div className="shopping-list">
           <div className="shopping-list-header">
             <h3>Shopping List</h3>
-            <button 
-              onClick={exportToGoogleKeep}
-              className="google-keep-btn"
-              title="Export to Google Keep"
-            >
-              📝 Export to Google Keep
-            </button>
+            <div className="export-buttons">
+              <button 
+                onClick={copyToClipboard}
+                className="copy-btn"
+                title="Copy to clipboard"
+              >
+                📋 Copy
+              </button>
+              <button 
+                onClick={exportToGoogleKeep}
+                className="google-keep-btn"
+                title="Export to Google Keep (with checklist instructions)"
+              >
+                📝 Google Keep
+              </button>
+            </div>
           </div>
           <div className="shopping-items">
             {shoppingList.map((item, index) => (
