@@ -28,14 +28,19 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
   };
 
   const loadRandomRecipes = async () => {
+    console.log('🔍 loadRandomRecipes called with activeSource:', activeSource);
+    console.log('🔍 edamamApi.isConfigured():', edamamApi.isConfigured());
     setLoading(true);
     let randomRecipes = [];
     
     if (activeSource === 'themealdb') {
+      console.log('🔍 Loading TheMealDB recipes');
       randomRecipes = await themealdbApi.getRandomRecipes(12);
     } else if (activeSource === 'edamam' && edamamApi.isConfigured()) {
+      console.log('🔍 Loading Edamam recipes');
       randomRecipes = await edamamApi.getRandomRecipes(12);
     } else if (activeSource === 'both') {
+      console.log('🔍 Loading both sources');
       const [themealdbRecipes, edamamRecipes] = await Promise.all([
         themealdbApi.getRandomRecipes(6),
         edamamApi.isConfigured() ? edamamApi.getRandomRecipes(6) : Promise.resolve([])
@@ -43,8 +48,11 @@ const TheMealDBBrowser = ({ onAddRecipe }) => {
       randomRecipes = [...themealdbRecipes, ...edamamRecipes];
       // Shuffle the combined results
       randomRecipes = randomRecipes.sort(() => 0.5 - Math.random());
+    } else {
+      console.log('🔍 No valid source configuration found');
     }
     
+    console.log('🔍 Final randomRecipes:', randomRecipes.length, 'recipes');
     setRecipes(randomRecipes);
     setLoading(false);
   };

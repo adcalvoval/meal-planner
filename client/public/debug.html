@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edamam Debug</title>
+</head>
+<body>
+    <h1>Debug Edamam Configuration</h1>
+    <div id="debug-info"></div>
+    <script>
+        const debugDiv = document.getElementById('debug-info');
+        
+        // Check environment variables
+        const config = {
+            app_id: '%REACT_APP_EDAMAM_APP_ID%',
+            app_key: '%REACT_APP_EDAMAM_APP_KEY%'
+        };
+        
+        debugDiv.innerHTML = `
+            <h3>Environment Variables:</h3>
+            <p>REACT_APP_EDAMAM_APP_ID: ${config.app_id || 'NOT SET'}</p>
+            <p>REACT_APP_EDAMAM_APP_KEY: ${config.app_key ? 'SET' : 'NOT SET'}</p>
+        `;
+    </script>
+</body>
+</html>

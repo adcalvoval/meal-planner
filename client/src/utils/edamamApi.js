@@ -8,7 +8,12 @@ const EDAMAM_CONFIG = {
   app_key: process.env.REACT_APP_EDAMAM_APP_KEY || '',
   // Fallback to demo credentials if available (users can set their own)
   isConfigured: function() {
-    return this.app_id && this.app_key;
+    console.log('🔍 Edamam Config Check:', {
+      app_id: this.app_id,
+      app_key: this.app_key ? 'SET' : 'NOT SET',
+      result: !!(this.app_id && this.app_key)
+    });
+    return !!(this.app_id && this.app_key);
   }
 };
 
@@ -137,6 +142,7 @@ export const edamamApi = {
 
   // Search recipes by query
   searchRecipes: async (query, params = {}) => {
+    console.log('🔍 Edamam searchRecipes called with:', { query, params });
     if (!EDAMAM_CONFIG.isConfigured()) {
       console.warn('Edamam API not configured. Please set REACT_APP_EDAMAM_APP_ID and REACT_APP_EDAMAM_APP_KEY');
       return [];
@@ -213,9 +219,11 @@ export const edamamApi = {
 
   // Get random recipes (search with popular ingredients)
   getRandomRecipes: async (count = 20) => {
+    console.log('🔍 Edamam getRandomRecipes called with count:', count);
     const popularIngredients = ['chicken', 'pasta', 'beef', 'salmon', 'vegetables', 'rice'];
     const randomIngredient = popularIngredients[Math.floor(Math.random() * popularIngredients.length)];
     
+    console.log('🔍 Using random ingredient:', randomIngredient);
     return await edamamApi.searchRecipes(randomIngredient, {
       to: count,
       from: Math.floor(Math.random() * 50) // Start from random position for variety
